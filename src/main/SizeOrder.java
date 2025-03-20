@@ -7,6 +7,7 @@ public class SizeOrder {
     private String[] sizes;
     private final List<String> literal = new ArrayList<>();
     private final Map<String, List<Float>> mapSize = new LinkedHashMap<>();
+    private final List<String> exceptions = new ArrayList<>();
 
     public SizeOrder(String[] sizes) {
         this.sizes = sizes;
@@ -20,16 +21,68 @@ public class SizeOrder {
                     mapSize.put("Numerical", new ArrayList<>());
                 }
                 mapSize.get("Numerical").add(Float.parseFloat(size));
-            } else if (isOnlyLiteral(size)){
+            } else if (isOnlyLiteral(size) || isQuantifiedLiteral(size)){
                 literal.add(size);
-            } else {//for simplicity from the given example I suppose that compose size are written number+""+identifier
-                String[] element = size.split(" ");
-                if (!mapSize.containsKey(element[0])) {
-                    mapSize.put(element[0], new ArrayList<>());
-                }
-                mapSize.get(element[0]).add(Float.parseFloat(element[1]));
+            } else if (isNationalSizeType(size)){//for simplicity national size are written number+""+identifier or in opposed order with two literal identifier
+                nationalSizeTypes(size);
+            } else {
+                this.exceptions.add(size);
             }
         }
+    }
+
+    private boolean isQuantifiedLiteral(String size) {
+        return size.length() > 2 &&
+                (
+                        (
+                                size.charAt(size.length() - 2) == 'X' && getLastChar(size) == 'L'
+                        ) || (
+                                size.charAt(size.length() - 2) == 'X' && getLastChar(size) == 'S'
+                        )
+                )
+                && isPartiallyNumber(size,2);
+    }
+
+    private boolean isPartiallyNumber(String s, int end) {
+        for(int i = 0; i < s.length() - end; i++){
+            char c = s.charAt(i);
+            if(!Character.isDigit(c)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    int getPartiallyNumber(String s) {
+        String digits = s.replaceAll("\\D", "");
+        return Integer.parseInt(digits);
+    }
+
+    private boolean isNationalSizeType(String size){
+        String[] element = size.split(" ");
+        return element.length == 2 && !isNumber(element[0]) && isNumber(element[1])
+                || element.length == 2 && isNumber(element[0]) && !isNumber(element[1]);
+    }
+
+    private boolean isNationalSizeTypeWithoutShift(String size){
+        return (!Character.isDigit(size.charAt(size.length() - 1)) && !Character.isDigit(size.charAt(size.length() - 2)))
+                || !Character.isDigit(size.charAt(0)) && !Character.isDigit(size.charAt(1));
+    }
+
+    private void nationalSizeTypes(String size){
+        String[] element = size.split(" ");
+        if(!isNumber(element[0])){
+            if (!mapSize.containsKey(element[0])) {
+                mapSize.put(element[0], new ArrayList<>());
+            }
+            mapSize.get(element[0]).add(Float.parseFloat(element[1]));
+        } else {
+            if (!mapSize.containsKey(element[1])) {
+                mapSize.put(element[1], new ArrayList<>());
+            }
+            mapSize.get(element[1]).add(Float.parseFloat(element[0]));
+        }
+
     }
 
     private boolean isOnlyLiteral(String size) {
@@ -61,7 +114,7 @@ public class SizeOrder {
             if(!Objects.equals(key, "Numerical")){
                 Collections.sort(mapSize.get(key));
                 for(float f : mapSize.get(key)){
-                    sizes.add(f + " " + key);
+                    sizes.add(key + " " + f);
                 }
             } else {
                 Collections.sort(mapSize.get(key));
@@ -73,6 +126,17 @@ public class SizeOrder {
         return sizes.toArray(new String[0]);
     }
 
+    int getXLength(String size){
+        int xLength = 0;
+        if (getLastChar(size) == 'L' || getLastChar(size) == 'S') {
+            xLength = size.length()-1;
+            if (isNationalSizeType(size)) {
+                xLength = getPartiallyNumber(size);
+            }
+        }
+        return xLength;
+    }
+
     private String[] orderListSize() {
         List<String> newSizes = new LinkedList<>();
         for(String size : literal){
@@ -81,16 +145,17 @@ public class SizeOrder {
             } else if (newSizes.contains(size)) {
                 newSizes.add(newSizes.indexOf(size),size);
             } else {
-                if (size.charAt(size.length()-1) == 'L') {
+                int xLength = getXLength(size);
+                if (getLastChar(size) == 'L') {
                     if(getLastChar(newSizes.getLast()) != 'L'
-                            || newSizes.getLast().length() <= size.length()){
+                            || newSizes.getLast().length() <= xLength+1){
                         newSizes.add(size);
                     } else {
                         newSizes.add(findFirstHigherIndexL(size,newSizes),size);
                     }
                 } else if (getLastChar(size) == 'S') {
                     if(getLastChar(newSizes.getFirst()) != 'S'
-                            || newSizes.getFirst().length() <= size.length()){
+                            || newSizes.getFirst().length() <= xLength+1){
                         newSizes.addFirst(size);
                     } else {
                         newSizes.add(findFirstHigherIndexS(size,newSizes),size);
@@ -116,10 +181,11 @@ public class SizeOrder {
 
     private int findFirstHigherIndexS(String size, List<String> sizes) {
         int i = 0;
+        int sizeLength = getXLength(size) + 1;
         while (i < sizes.size()
-                && sizes.get(i).length() > size.length()) {
-            if (sizes.get(i).charAt(sizes.get(i).length()-1)=='M'
-                    || sizes.get(i).charAt(sizes.get(i).length()-1) == 'L') break;
+                && sizes.get(i).length() > sizeLength) {
+            if (getLastChar(sizes.get(i))=='M'
+                    || getLastChar(sizes.get(i)) == 'L') break;
             i++;
         }
         return i;
@@ -127,8 +193,9 @@ public class SizeOrder {
 
     private int findFirstHigherIndexL(String size, List<String> sizes) {
         int i = 0;
+        int sizeLength = getXLength(size) + 1;
         while (i < sizes.size()) {
-            if (getLastChar(sizes.get(i)) == 'L' && sizes.get(i).length() > size.length()) {
+            if (getLastChar(sizes.get(i)) == 'L' && sizes.get(i).length() > sizeLength) {
                 break;
             }
             i++;
@@ -137,10 +204,12 @@ public class SizeOrder {
     }
 
     public String[] orderList(){
-        String[] orderedArray = Stream.concat(Arrays.stream(orderListSize()), Arrays.stream(orderMapSize()))
-                .toArray(String[]::new);
-        this.sizes = orderedArray;
-        return orderedArray;
+        String[] orderedArray = Stream.concat(Arrays.stream(orderListSize()),
+                        Arrays.stream(orderMapSize()))
+                            .toArray(String[]::new);
+        String[] sortedArray = Stream.concat(Arrays.stream(orderedArray), Arrays.stream(exceptions.toArray(new String[0]))).toArray(String[]::new);
+        this.sizes = sortedArray;
+        return sortedArray;
     }
 
     private char getLastChar(String size){

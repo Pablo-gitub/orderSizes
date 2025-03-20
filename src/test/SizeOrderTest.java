@@ -12,7 +12,10 @@ public class SizeOrderTest {
     public void givenTest() {
         String[] sizesArray = {"S", "43", "XL", "40", "M", "12", "IT 35", "IT 43", "FR 12", "UK 50", "XXL", "IT 50"};
         sizes = new SizeOrder(sizesArray);
-        String[] expected = new String[]{"S", "M", "XL", "XXL", "12.0", "40.0", "43.0", "35.0 IT", "43.0 IT", "50.0 IT", "12.0 FR", "50.0 UK"};
+        String[] expected = new String[]{
+                "S", "M", "XL", "XXL", "12.0",
+                "40.0", "43.0", "IT 35.0", "IT 43.0",
+                "IT 50.0", "FR 12.0", "UK 50.0"};
         assertArrayEquals(expected, sizes.orderList());
     }
 
@@ -20,7 +23,11 @@ public class SizeOrderTest {
     public void test() {
         String[] sizesArray = {"XS", "43", "XL", "40", "M", "12", "IT 35", "IT 43", "FR 12", "UK 50", "S", "IT 50"};
         sizes = new SizeOrder(sizesArray);
-        String[] expected = new String[]{"XS", "S", "M", "XL", "12.0", "40.0", "43.0", "35.0 IT", "43.0 IT", "50.0 IT", "12.0 FR", "50.0 UK"};
+        String[] expected = new String[]{
+                "XS", "S", "M", "XL",
+                "12.0", "40.0", "43.0",
+                "IT 35.0", "IT 43.0", "IT 50.0",
+                "FR 12.0", "UK 50.0"};
         assertArrayEquals(expected, sizes.orderList());
     }
 
@@ -44,7 +51,7 @@ public class SizeOrderTest {
     public void testOnlyCompositeSizes() {
         String[] sizesArray = {"IT 43", "UK 50", "FR 12", "IT 35", "IT 50"};
         sizes = new SizeOrder(sizesArray);
-        String[] expected = new String[]{"35.0 IT", "43.0 IT", "50.0 IT", "50.0 UK", "12.0 FR"};
+        String[] expected = new String[]{"IT 35.0", "IT 43.0", "IT 50.0", "UK 50.0", "FR 12.0"};
         assertArrayEquals(expected, sizes.orderList());
     }
 
@@ -55,7 +62,7 @@ public class SizeOrderTest {
         String[] expected = new String[]{
                 "XXS", "M", "XL",
                 "12.0", "43.0", "50.0",
-                "35.0 IT", "43.0 IT", "50.0 UK"
+                "IT 35.0", "IT 43.0", "UK 50.0"
         };
         assertArrayEquals(expected, sizes.orderList());
     }
