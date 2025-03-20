@@ -23,12 +23,31 @@ public class SizeOrder {
                 mapSize.get("Numerical").add(Float.parseFloat(size));
             } else if (isOnlyLiteral(size) || isQuantifiedLiteral(size)){
                 literal.add(size);
-            } else if (isNationalSizeType(size)){//for simplicity national size are written number+""+identifier or in opposed order with two literal identifier
-                nationalSizeTypes(size);
+            } else if (isNationalSizeType(size) || isNationalSizeTypeWithoutShift(size)){//for simplicity national size are written number+" "+identifier or in opposed order with two literal identifier
+                if (isNationalSizeType(size)){
+                    nationalSizeTypes(size);
+                } else {
+                    String shiftSize = addShift(size);
+                    nationalSizeTypes(shiftSize);
+                }
             } else {
                 this.exceptions.add(size);
             }
         }
+    }
+
+    private String addShift(String size) {
+        if (size == null || size.length() < 3) {
+            return size;
+        }
+        if (Character.isLetter(size.charAt(0)) && Character.isLetter(size.charAt(1))) {
+            return size.substring(0, 2) + " " + size.substring(2);
+        }
+        int len = size.length();
+        if (Character.isLetter(size.charAt(len - 1)) && Character.isLetter(size.charAt(len - 2))) {
+            return size.substring(0, len - 2) + " " + size.substring(len - 2);
+        }
+        return size;
     }
 
     private boolean isQuantifiedLiteral(String size) {
