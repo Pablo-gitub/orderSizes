@@ -235,4 +235,27 @@ public class SizeOrder {
         return size.charAt(size.length()-1);
     }
 
+    public String toString(){
+        orderList();
+        StringBuilder lineString = new StringBuilder(this.literal.toString());
+        lineString.append("\n");
+        for (Map.Entry<String, List<Float>> entry : this.mapSize.entrySet()) {
+            String key = entry.getKey();
+            List<Float> values = entry.getValue();
+            StringJoiner joiner = new StringJoiner(", ");
+            for (Float value : values) {
+                if(!key.equals("Numerical")){
+                    joiner.add(key + " " + value);
+                } else {
+                    joiner.add(value.toString());
+                }
+            }
+            lineString.append("[").append(joiner.toString()).append("]").append("\n");
+        }
+        if(!exceptions.isEmpty()){
+            lineString.append("Exceptions:\n").append(exceptions);
+        }
+        return lineString.toString();
+    }
+
 }
