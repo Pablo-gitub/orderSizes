@@ -10,6 +10,6 @@ public class Main {
         for (String s : orderedArray) {
             System.out.println(s);
         }
-        System.out.println(sizes.toString());
+        System.out.println(sizes);
     }
 }

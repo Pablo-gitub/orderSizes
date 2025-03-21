@@ -237,7 +237,7 @@ public class SizeOrder {
 
     public String toString(){
         orderList();
-        StringBuilder lineString = new StringBuilder(this.literal.toString());
+        StringBuilder lineString = new StringBuilder(Arrays.toString(orderListSize()));
         lineString.append("\n");
         for (Map.Entry<String, List<Float>> entry : this.mapSize.entrySet()) {
             String key = entry.getKey();
